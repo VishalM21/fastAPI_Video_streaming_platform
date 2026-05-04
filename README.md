@@ -5,7 +5,7 @@
 ## Project Layout
 
 ```
-streamvault/
+fastAPI_Video_streaming_platform/
 ├── main.py            
 ├── models.py          
 ├── database.py        
