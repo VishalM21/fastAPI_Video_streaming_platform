@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+
+{% block title %}Library — {{ app_name }}{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero header ─────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <p class="hero-label">Your private vault</p>
+    <h1 class="hero-title">
+      Stream&shy;Vault
+      <span class="hero-count">{{ total_videos }} video{{ 's' if total_videos != 1 else '' }}</span>
+    </h1>
+  </div>
+  <div class="hero-glow" aria-hidden="true"></div>
+</section>
+
+<!-- ── Flash messages ──────────────────────────────────────────────────── -->
+{% if request.query_params.get('deleted') %}
+<div class="flash flash-info">Video removed successfully.</div>
+{% endif %}
+
+<!-- ── Gallery grid ────────────────────────────────────────────────────── -->
+{% if video_data %}
+<section class="gallery">
+  {% for item in video_data %}
+  {% set v = item.video %}
+  <article class="card" style="--card-index: {{ loop.index }}">
+    <a href="/video/{{ v.id }}" class="card-link" aria-label="Watch {{ v.title }}">
+
+      <!-- Thumbnail / Poster -->
+      <div class="card-thumb">
+        {% if item.thumb_url %}
+          <img src="{{ item.thumb_url }}" alt="{{ v.title }}" loading="lazy" />
+        {% else %}
+          <div class="card-thumb-placeholder">
+            <span class="play-icon-lg">▶</span>
+          </div>
+        {% endif %}
+        <div class="card-overlay">
+          <span class="play-btn">▶</span>
+        </div>
+        <span class="card-size-badge">{{ v.friendly_size }}</span>
+      </div>
+
+      <!-- Meta -->
+      <div class="card-body">
+        <h2 class="card-title">{{ v.title }}</h2>
+        {% if v.description %}
+        <p class="card-desc">{{ v.description | truncate(90) }}</p>
+        {% endif %}
+        <div class="card-meta">
+          <span class="meta-item">{{ v.uploaded_at.strftime('%b %d, %Y') }}</span>
+          <span class="meta-dot">·</span>
+          <span class="meta-item">{{ v.view_count }} view{{ 's' if v.view_count != 1 else '' }}</span>
+        </div>
+      </div>
+
+    </a>
+  </article>
+  {% endfor %}
+</section>
+
+{% else %}
+<!-- Empty state -->
+<div class="empty-state">
+  <div class="empty-icon">📽️</div>
+  <h2>No videos yet</h2>
+  <p>Upload your first video to get started.</p>
+  <a href="/upload" class="btn-primary">+ Upload Video</a>
+</div>
+{% endif %}
+
+{% endblock %}

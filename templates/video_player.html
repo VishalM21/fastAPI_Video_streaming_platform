@@ -1,0 +1,131 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ video.title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+
+<div class="player-page">
+
+  <!-- ── Upload success flash ──────────────────────────────────────────── -->
+  {% if just_uploaded %}
+  <div class="flash flash-success">
+    ✓ Video uploaded successfully and is ready to stream.
+  </div>
+  {% endif %}
+
+  <!-- ── Video player ───────────────────────────────────────────────────── -->
+  <section class="player-wrap">
+    <div class="player-container">
+      <video
+        id="mainPlayer"
+        class="video-player"
+        controls
+        preload="metadata"
+        poster=""
+      >
+        <source src="{{ video_url }}" type="{{ video.content_type }}" />
+        <p class="video-fallback">
+          Your browser does not support HTML5 video.
+          <a href="{{ video_url }}">Download the video</a> instead.
+        </p>
+      </video>
+
+      <!-- Presigned URL expiry warning -->
+      <div class="expiry-notice" id="expiryNotice" aria-live="polite">
+        <span class="expiry-icon">⏱</span>
+        Stream link expires in <span id="expiryCountdown">{{ presigned_expiry_minutes }}:00</span>
+        — <a href="{{ request.url.path }}">refresh page</a> to get a new link.
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Video metadata ────────────────────────────────────────────────── -->
+  <section class="video-meta-section">
+    <div class="video-meta-inner">
+
+      <div class="video-title-row">
+        <div>
+          <h1 class="video-title">{{ video.title }}</h1>
+          <div class="video-sub-meta">
+            <span>Uploaded {{ video.uploaded_at.strftime('%B %d, %Y') }}</span>
+            <span class="meta-dot">·</span>
+            <span>{{ video.friendly_size }}</span>
+            <span class="meta-dot">·</span>
+            <span>{{ video.view_count }} view{{ 's' if video.view_count != 1 else '' }}</span>
+            <span class="meta-dot">·</span>
+            <span class="content-type-tag">{{ video.content_type }}</span>
+          </div>
+        </div>
+
+        <!-- Delete button -->
+        <form method="post" action="/video/{{ video.id }}/delete" class="delete-form"
+              onsubmit="return confirm('Permanently delete this video from S3 and the database?')">
+          <button type="submit" class="btn-danger">🗑 Delete</button>
+        </form>
+      </div>
+
+      {% if video.description %}
+      <div class="video-description">
+        <p>{{ video.description }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Technical info table -->
+      <details class="tech-details">
+        <summary>Technical details</summary>
+        <table class="tech-table">
+          <tr><th>Original filename</th><td>{{ video.original_filename }}</td></tr>
+          <tr><th>S3 key</th><td><code>{{ video.s3_key }}</code></td></tr>
+          <tr><th>File size</th><td>{{ video.friendly_size }} ({{ "{:,}".format(video.file_size_bytes) }} bytes)</td></tr>
+          <tr><th>MIME type</th><td>{{ video.content_type }}</td></tr>
+          <tr><th>Video ID</th><td><code>{{ video.id }}</code></td></tr>
+          <tr><th>Presigned URL expiry</th><td>{{ presigned_expiry_minutes }} minutes</td></tr>
+        </table>
+      </details>
+
+    </div>
+  </section>
+
+  <!-- ── Back link ─────────────────────────────────────────────────────── -->
+  <div class="back-link-wrap">
+    <a href="/" class="back-link">← Back to Library</a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/**
+ * Countdown timer for presigned URL expiry.
+ * When it hits 0:00 the player is paused and the notice becomes prominent.
+ */
+(function () {
+  const totalSeconds = {{ presigned_expiry_minutes }} * 60;
+  let remaining = totalSeconds;
+  const el = document.getElementById("expiryCountdown");
+  const notice = document.getElementById("expiryNotice");
+  const player = document.getElementById("mainPlayer");
+
+  function fmt(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${String(sec).padStart(2, "0")}`;
+  }
+
+  const timer = setInterval(function () {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(timer);
+      el.textContent = "expired";
+      notice.classList.add("expiry-urgent");
+      if (player) player.pause();
+      return;
+    }
+    el.textContent = fmt(remaining);
+    // Warn when < 5 minutes left
+    if (remaining <= 300) notice.classList.add("expiry-warn");
+  }, 1000);
+})();
+</script>
+{% endblock %}
