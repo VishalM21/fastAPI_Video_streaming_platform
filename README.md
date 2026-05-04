@@ -6,19 +6,19 @@
 
 ```
 streamvault/
-├── main.py            # FastAPI app, all routes
-├── models.py          # SQLAlchemy ORM model (Video)
-├── database.py        # Async engine + session factory
-├── s3_service.py      # All Boto3 / S3 operations
-├── config.py          # Pydantic settings (reads .env)
+├── main.py            
+├── models.py          
+├── database.py        
+├── s3_service.py      
+├── config.py          
 ├── requirements.txt
-├── .env.example       # Copy to .env and fill in
+├── .env.example       
 ├── static/
 │   └── css/
-│       └── style.css  # Dark "StreamVault" theme
+│       └── style.css  
 └── templates/
-    ├── layout.html    # Base template (navbar, footer)
-    ├── index.html     # Gallery view
+    ├── layout.html    
+    ├── index.html    
     ├── video_player.html
     └── upload.html
 ```
